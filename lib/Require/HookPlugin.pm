@@ -58,7 +58,7 @@ sub _run_event {
     my $allow_after_handler_to_skip_rest     = $args{allow_after_handler_to_skip_rest};     $allow_after_handler_to_skip_rest     = 1 unless defined $allow_after_handler_to_skip_rest;
     my $stop_after_first_handler_failure     = $args{stop_after_first_handler_failure};     $stop_after_first_handler_failure     = 1 unless defined $stop_after_first_handler_failure;
 
-    my ($res, $is_success);
+    my ($res, $is_success, $is_unhandled);
 
   RUN_BEFORE_EVENT_HANDLERS:
     {
@@ -96,6 +96,7 @@ sub _run_event {
         local $r->{event} = $name;
         my $i = 0;
         $res = [304, "There is no handler for event $name"];
+        $is_unhandled = 1;
         $is_success = 1;
         if ($req_handler) {
             die "There is no handler for event $name"
@@ -107,6 +108,7 @@ sub _run_event {
             my ($label, $prio, $handler) = @$rec;
             warn "[Require::HookPlugin] [event $name] [$i/${\( scalar(@{ $Handlers{$name} }) )}] -> handler $label ...\n" if $debug;
             $res = $handler->($r);
+            $is_unhandled = 0;
             $is_success = $res->[0] =~ /\A[123]/;
             warn "[Require::HookPlugin] [event $name] [$i/${\( scalar(@{ $Handlers{$name} }) )}] <- handler $label: [".join(",", @$res)."] (".($is_success ? "success":"fail").")\n" if $debug;
             last RUN_EVENT_HANDLERS if $is_success && !$run_all_handlers;
@@ -133,7 +135,10 @@ sub _run_event {
         }
     }
 
-    if ($is_success && $args{on_success}) {
+    if ($is_unhandled && $args{on_unhandled}) {
+        warn "[Require::HookPlugin] Running on_unhandled ...\n" if $debug;
+        $args{on_unhandled}->($r);
+    } elsif ($is_success && $args{on_success}) {
         warn "[Require::HookPlugin] Running on_success ...\n" if $debug;
         $args{on_success}->($r);
     } elsif (!$is_success && $args{on_failure}) {
@@ -303,6 +308,7 @@ sub _parse_name {
 
 # modified from Module::Installed::Tiny
 sub _get_src_from_rest_of_INC {
+    warn "D1";
     my ($self, $name) = @_;
 
     my ($name_mod, $name_pm, $name_path) = _parse_name($name);
@@ -396,20 +402,31 @@ sub Require::HookPlugin::INC {
 
     warn "[Require::HookPlugin] require($filename) ...\n" if $debug;
 
-    $r = Require::HookPlugin::r->new(filename => $filename);
+    $r = Require::HookPlugin::r->new(filename => $filename, caller=>[caller(0)]);
 
-    $self->_run_event(
-        name => 'get_src',
-        on_failure => sub {
+    {
+        my $handler = sub {
             # fallback to getting source from other items in @INC
-            my $src = $self->_get_src_from_rest_of_INC;
+            my $src = $self->_get_src_from_rest_of_INC($filename);
             if (defined $src) {
                 $r->src($src);
             }
-        },
-    );
+        };
+        $self->_run_event(
+            name => 'get_src',
+            on_failure => $handler,
+            on_unhandled => $handler,
+        );
+    }
 
-    $r->src;
+    #print "D:src=<<".$r->src.">>\n";
+
+    my $src = $r->src;
+    if (defined $src) {
+        return $src;
+    } else {
+        die "Can't locate $filename in \@INC";
+    }
 }
 
 sub import {
@@ -446,6 +463,11 @@ sub src {
     } else {
         return $self->{src};
     }
+}
+
+sub caller {
+    my $self = shift;
+    $r->{caller};
 }
 
 1;
@@ -623,6 +645,12 @@ Usage:
 
 Get or set source code content. Will return undef if source code has not been
 found or set.
+
+=head3 caller
+
+Usage:
+
+ my $caller = $r->caller; # arrayref
 
 
 =head1 FAQ

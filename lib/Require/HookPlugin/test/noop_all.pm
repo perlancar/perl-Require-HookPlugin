@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::test::noop_all;
+package Require::HookPlugin::test::noop_all;
 
 # IFUNBUILT
 use strict;
@@ -12,12 +12,18 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        args => {},
+    };
+}
+
 sub new {
     my ($class) = @_;
     bless {}, $class;
 }
 
-sub Require::HookChain::test::noop_all::INC {
+sub after_get_src {
     my ($self, $r) = @_;
 
     #print "Loading ", $r->filename, " ...\n";
@@ -31,7 +37,7 @@ sub Require::HookChain::test::noop_all::INC {
 
 =head1 SYNOPSIS
 
- use Require::HookChain 'test::noop_all';
+ use Require::HookPlugin -test::noop_all;
  # now each subsequent require() will do nothing and will not load any source
 
 
@@ -47,4 +53,4 @@ the regular "no-op" upon re-loading a module.
 
 =head1 SEE ALSO
 
-L<Require::HookChain::test::noop>
+L<Require::HookPlugin::test::noop>

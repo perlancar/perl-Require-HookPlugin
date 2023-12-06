@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::test::noop;
+package Require::HookPlugin::test::noop;
 
 # IFUNBUILT
 use strict;
@@ -11,13 +11,15 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        args => {},
+    };
+}
+
 sub new {
     my ($class) = @_;
     bless {}, $class;
-}
-
-sub Require::HookChain::test::noop::INC {
-    return ();
 }
 
 1;
@@ -27,7 +29,7 @@ sub Require::HookChain::test::noop::INC {
 
 =head1 SYNOPSIS
 
- use Require::HookChain 'test::noop';
+ use Require::HookPlugin -test::noop;
  # now each subsequent require() will behave the same as before
 
 
@@ -35,10 +37,9 @@ sub Require::HookChain::test::noop::INC {
 
 For testing only.
 
-This hook does nothing, the hook always declines. Require::HookChain will just
-move on to other hooks that do something.
+This plugin does nothing.
 
 
 =head1 SEE ALSO
 
-L<Require::HookChain::test::noop_all>
+L<Require::HookPlugin::test::noop_all>

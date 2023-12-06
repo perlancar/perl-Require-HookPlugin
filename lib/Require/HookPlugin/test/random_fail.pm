@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::test::random_fail;
+package Require::HookPlugin::test::random_fail;
 
 # IFUNBUILT
 use strict;
@@ -11,20 +11,36 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        args => {
+            probability => {
+                schema => 'float*',
+                default => 0.5,
+            },
+        },
+    };
+}
+
 sub new {
-    my ($class, $probability) = @_;
+    my ($class, %args) = @_;
+
+    my $probability = delete $args{probability};
     $probability = 0.5 unless defined $probability;
+
+    die "Unknown argument(s): ".join(", ", keys %args) if keys %args;
+
     bless {probability=>$probability}, $class;
 }
 
-sub Require::HookChain::test::random_fail::INC {
+sub before_get_src {
     my ($self, $r) = @_;
 
     if (rand() < $self->{probability}) {
         my $filename = $r->filename;
         die "Can't locate $filename: test::random_fail";
     }
-    ();
+    [200];
 }
 
 1;
@@ -34,7 +50,7 @@ sub Require::HookChain::test::random_fail::INC {
 
 =head1 SYNOPSIS
 
- use Require::HookChain 'test::random_fail', 0.25; # probability, default is 0.5 (50%)
+ use Require::HookPlugin -test::random_fail, 0.25; # probability, default is 0.5 (50%)
  # now each subsequent require() will ~25% fail
 
 
@@ -45,4 +61,4 @@ For testing only.
 
 =head1 SEE ALSO
 
-L<Require::HookChain::test::fail>
+L<Require::HookPlugin::test::fail>

@@ -11,12 +11,18 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        args => {},
+    };
+}
+
 sub new {
     my ($class) = @_;
     bless {}, $class;
 }
 
-sub before_get_source {
+sub before_get_src {
     my ($self, $r) = @_;
 
     my $elapsed = time() - $^T;
@@ -37,7 +43,7 @@ sub before_get_source {
 
 A demo (L<nauniq> is a Perl script you can get from CPAN):
 
- % PERL5OPT="-MRequire::HookChain=log::stderr" nauniq ~/samples/1.csv
+ % PERL5OPT="-MRequire::HookPlugin=-log::stderr" nauniq ~/samples/1.csv
  Require::HookPlugin::log::stderr: Require-ing strict.pm (called from package main file /home/u1/perl5/perlbrew/perls/perl-5.34.0/bin/nauniq:4) ...
  Require::HookPlugin::log::stderr: Require-ing warnings.pm (called from package main file /home/u1/perl5/perlbrew/perls/perl-5.34.0/bin/nauniq:5) ...
  Require::HookPlugin::log::stderr: Require-ing App/nauniq.pm (called from package main file /home/u1/perl5/perlbrew/perls/perl-5.34.0/bin/nauniq:7) ...

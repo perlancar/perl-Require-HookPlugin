@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::source::test::str;
+package Require::HookPlugin::source::test::str;
 
 #IFUNBUILT
 use strict;
@@ -11,21 +11,32 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        prio => 50,
+        args => {
+            src => {
+                summary => 'String to return as source code',
+                schema => 'str*',
+            },
+        },
+    };
+}
+
 sub new {
-    my ($class, $src) = @_;
+    my ($class, %args) = @_;
+
+    defined(my $src = delete $args{src}) or die "Please specify src";
+    die "Unknown argument(s): ".join(", ", keys %args) if keys %args;
+
     bless { src => $src }, $class;
 }
 
-sub Require::HookChain::source::test::str::INC {
+sub on_get_src {
     my ($self, $r) = @_;
 
-    # safety, in case we are not called by Require::HookChain
-    return () unless ref $r;
-
-    return if defined $r->src;
-
     $r->src($self->{src});
-    return 1;
+    [201];
 }
 
 1;
@@ -37,26 +48,24 @@ sub Require::HookChain::source::test::str::INC {
 
 In Perl code:
 
- use Require::HookChain 'source::test::str' => "1;\n";
+ use Require::HookPlugin -source::test::str => (str => "1;\n");
  use Foo; # will use "1;\n" as source code even if the real Foo.pm is installed
 
 On the command-line:
 
  # will use string '1' if Foo is not installed
- % perl -MRHC=-end,1,source::test::src,1 -MFoo -E...
+ % perl -MRHP=-source::test::src,src,1 -MFoo -E...
 
 
 =head1 DESCRIPTION
 
 This is a test hook to load a constant string as source code of modules you are
 loading. You can also achieve the same effect by directly installing an C<@INC>
-hook without the L<Require::HookChain> framework like this:
+hook without the L<Require::HookPlugin> framework like this:
 
  unshift @INC, sub { \"some string" };
 
 
 =head1 SEE ALSO
 
-L<Require::HookChain>
-
-Other C<Require::HookChain::source::*>
+Other C<Require::HookPlugin::source::*>

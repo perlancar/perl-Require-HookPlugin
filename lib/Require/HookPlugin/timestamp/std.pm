@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::timestamp::std;
+package Require::HookPlugin::timestamp::std;
 
 # IFUNBUILT
 use strict;
@@ -13,16 +13,21 @@ use warnings;
 
 our %Timestamps; # key=module name, value=epoch
 
+sub meta {
+    return {
+        prio => 50,
+        args => {
+        },
+    };
+}
+
 sub new {
     my ($class) = @_;
     bless {}, $class;
 }
 
-sub Require::HookChain::timestamp::std::INC {
+sub after_get_src {
     my ($self, $r) = @_;
-
-    # safety, in case we are not called by Require::HookChain
-    return () unless ref $r;
 
     $Timestamps{$r->filename} = time()
         unless defined $Timestamps{$r->{filename}};
@@ -35,12 +40,12 @@ sub Require::HookChain::timestamp::std::INC {
 
 =head1 SYNOPSIS
 
- use Require::HookChain 'timestamp::std';
- # now each time we require(), the timestamp is recorded in %Require::HookChain::timestamp::std::Timestamps
+ use Require::HookPlugin -timestamp::std;
+ # now each time we require(), the timestamp is recorded in %Require::HookPlugin::timestamp::std::Timestamps
 
  # later, print out the timestamps
- for (sort keys %Require::HookChain::timestamp::std::Timestamps) {
-     print "Module $_ loaded at ", scalar(localtime $Require::HookChain::timestamp::std::Timestamps{$_}), "\n";
+ for (sort keys %Require::HookPlugin::timestamp::std::Timestamps) {
+     print "Module $_ loaded at ", scalar(localtime $Require::HookPlugin::timestamp::std::Timestamps{$_}), "\n";
  }
 
 
@@ -49,7 +54,5 @@ sub Require::HookChain::timestamp::std::INC {
 
 =head1 SEE ALSO
 
-L<Require::HookChain::timestamp::hires> which uses L<Time::HiRes> to get
+L<Require::HookPlugin::timestamp::hires> which uses L<Time::HiRes> to get
 subsecond granularity but requires loading another module by itself.
-
-L<Require::HookChain>

@@ -36,7 +36,7 @@ sub after_get_src {
     my ($self, $r) = @_;
 
     my $src = $r->src;
-    return unless defined $src;
+    return [404] unless defined $src;
 
     $src = "$self->{preamble};\n$src";
     $r->src($src);
@@ -50,7 +50,7 @@ sub after_get_src {
 
 =head1 SYNOPSIS
 
- use Require::HookPlugin 'munge::prepend' => {preamble=>'use strict'}; # the semicolon and newline is added automatically
+ use Require::HookPlugin -munge::prepend => (preamble=>'use strict'); # the semicolon and newline is added automatically
 
 The above has a similar effect to:
 

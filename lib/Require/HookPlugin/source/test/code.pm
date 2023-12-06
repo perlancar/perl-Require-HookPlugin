@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::source::test::code;
+package Require::HookPlugin::source::test::code;
 
 #IFUNBUILT
 use strict;
@@ -11,19 +11,32 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        prio => 50,
+        args => {
+            code => {
+                summary => 'Code to return as source code',
+                schema => 'code*',
+            },
+        },
+    };
+}
+
 sub new {
-    my ($class, $code) = @_;
+    my ($class, %args) = @_;
+
+    defined(my $code = delete $args{code}) or die "Please specify code";
+    die "Unknown argument(s): ".join(", ", keys %args) if keys %args;
+
     bless { code => $code }, $class;
 }
 
-sub Require::HookChain::source::test::code::INC {
+sub on_get_src {
     my ($self, $r) = @_;
 
-    # safety, in case we are not called by Require::HookChain
-    return () unless ref $r;
-
     $r->src($self->{code}->($r));
-    1;
+    [201];
 }
 
 1;
@@ -35,30 +48,28 @@ sub Require::HookChain::source::test::code::INC {
 
 In Perl code:
 
- use Require::HookChain 'source::test::code' => sub { my $r = shift; $r->src("1;\n") unless defined $r->src };
+ use Require::HookPlugin -source::test::code => (code => sub { my $r = shift; $r->src("1;\n") unless defined $r->src });
  use Foo; # will use "1;\n" as source code even if the real Foo.pm is installed
 
 On the command-line:
 
  # will use code if Foo is not installed
- % perl -E'use RHC -end =>1, "source::test::code" => sub { my $r = shift; $r->src("1;\n") unless defined $r->src }; use Foo; ...'
+ % perl -E'use RHP -source::test::code => (code => sub { my $r = shift; $r->src("1;\n") unless defined $r->src }); use Foo; ...'
 
 
 =head1 DESCRIPTION
 
 This is a test hook to call specified code to provide source code of modules you
 are loading. The code is called with C<$r> (see
-L<Require::HookChain/"Require::HookChain::r OBJECT">) as the argument. To
+L<Require::HookPlugin/"Require::HookPlugin::r OBJECT">) as the argument. To
 provide source code, you can call C<< $r->src >> as shown in Synopsis.
 
 You can also achieve the same effect by directly installing an C<@INC> hook
-without the L<Require::HookChain> framework like this:
+without the L<Require::HookPlugin> framework like this:
 
  unshift @INC, sub { ... };
 
 
 =head1 SEE ALSO
 
-L<Require::HookChain>
-
-Other C<Require::HookChain::source::*>
+Other C<Require::HookPlugin::source::*>

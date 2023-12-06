@@ -1,4 +1,4 @@
-package Require::HookChainTest::One;
+package Require::HookPluginTest::One;
 
 use strict;
 
@@ -7,7 +7,7 @@ use strict;
 # DIST
 # VERSION
 
-$Require::HookChainTest::var1 = 1;
+$Require::HookPluginTest::var1 = 1;
 
 1;
-# ABSTRACT: A dummy module used in testing Require::HookChain
+# ABSTRACT: A dummy module used in testing Require::HookPlugin

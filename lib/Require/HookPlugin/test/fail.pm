@@ -1,5 +1,5 @@
 ## no critic: TestingAndDebugging::RequireUseStrict
-package Require::HookChain::test::fail;
+package Require::HookPlugin::test::fail;
 
 # IFUNBUILT
 use strict;
@@ -11,12 +11,18 @@ use warnings;
 # DIST
 # VERSION
 
+sub meta {
+    return {
+        args => {},
+    };
+}
+
 sub new {
     my ($class) = @_;
     bless {}, $class;
 }
 
-sub Require::HookChain::test::fail::INC {
+sub before_get_src {
     my ($self, $r) = @_;
 
     my $filename = $r->filename;
@@ -30,7 +36,7 @@ sub Require::HookChain::test::fail::INC {
 
 =head1 SYNOPSIS
 
- use Require::HookChain 'test::fail';
+ use Require::HookPlugin -test::fail;
  # now each subsequent require() will fail
 
 
@@ -41,4 +47,4 @@ For testing only.
 
 =head1 SEE ALSO
 
-L<Require::HookChain::test::random_fail>
+L<Require::HookPlugin::test::random_fail>
